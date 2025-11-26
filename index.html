@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salpointe TV: The Bulletproof Workflow</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #e2e8f0;
+        }
+        
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .step-card {
+            transition: all 0.3s ease;
+        }
+        
+        .step-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+        }
+
+        .node-card {
+            position: relative;
+        }
+        .node-card::after {
+            content: '';
+            position: absolute;
+            bottom: -24px;
+            left: 50%;
+            width: 2px;
+            height: 24px;
+            background: #334155;
+            z-index: 0;
+        }
+        .node-card:last-child::after {
+            display: none;
+        }
+        
+        @media (min-width: 768px) {
+            .node-card::after {
+                bottom: auto;
+                right: -24px;
+                left: auto;
+                top: 50%;
+                width: 24px;
+                height: 2px;
+            }
+        }
+
+        .gradient-text {
+            /* Salpointe Gold Gradient */
+            background: linear-gradient(135deg, #FFD700 0%, #FDB913 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569; 
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- Icons ---
+        const IconBase = ({ children, size = 24, className = "", ...props }) => (
+            <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width={size} 
+                height={size} 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                className={className}
+                {...props}
+            >
+                {children}
+            </svg>
+        );
+
+        const Icons = {
+            Scissors: (props) => <IconBase {...props}><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></IconBase>,
+            Monitor: (props) => <IconBase {...props}><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></IconBase>,
+            Layers: (props) => <IconBase {...props}><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></IconBase>,
+            Download: (props) => <IconBase {...props}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></IconBase>,
+            Wand2: (props) => <IconBase {...props}><path d="m19 2 2 2-2 2-2-2 2-2Z"/><path d="m5 17 2 2-2 2-2-2 2-2Z"/><path d="m2 10 2 2-2 2-2-2 2-2Z"/><path d="m14 2 2 2-2 2-2-2 2-2Z"/><path d="M13 11 8 16"/></IconBase>,
+            Film: (props) => <IconBase {...props}><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/></IconBase>,
+            Info: (props) => <IconBase {...props}><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></IconBase>,
+            CheckCircle2: (props) => <IconBase {...props}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></IconBase>,
+            AlertTriangle: (props) => <IconBase {...props}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></IconBase>,
+            XCircle: (props) => <IconBase {...props}><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></IconBase>,
+            Check: (props) => <IconBase {...props}><polyline points="20 6 9 17 4 12"/></IconBase>,
+            Settings: (props) => <IconBase {...props}><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></IconBase>,
+            Sliders: (props) => <IconBase {...props}><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></IconBase>,
+            Palette: (props) => <IconBase {...props}><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></IconBase>
+        };
+
+        const { 
+            Scissors, 
+            Monitor, 
+            CheckCircle2, 
+            AlertTriangle, 
+            Layers, 
+            Download, 
+            Wand2, 
+            Film,
+            Info,
+            XCircle,
+            Check,
+            Settings,
+            Sliders,
+            Palette
+        } = Icons;
+
+        // --- Data ---
+
+        const steps = [
+            {
+                id: 1,
+                title: "Premiere Prep",
+                icon: <Layers size={24} />,
+                color: "text-[#FFD700]", // Gold
+                description: "Clean your timeline to prevent 'baked-in' mistakes.",
+                tasks: [
+                    "Duplicate your sequence (Name it 'For_Color').",
+                    "Remove all Titles, Graphics, and Lower Thirds.",
+                    "Delete existing Color Effects (Lumetri) & Adjustment Layers.",
+                    "Flatten video to Track V1 where possible.",
+                    "Keep Transitions (Dissolves) - they will bake in, which is fine for this workflow."
+                ]
+            },
+            {
+                id: 2,
+                title: "The Golden Export",
+                icon: <Download size={24} />,
+                color: "text-[#FFD700]", // Gold
+                description: "Export a 'Visually Lossless' master file.",
+                tasks: [
+                    "Format: QuickTime.",
+                    "Codec (Mac): Apple ProRes 4444 (Supports 12-bit & Alpha).",
+                    "Codec (PC): DNxHR 4444 12-bit.",
+                    "Check 'Render at Maximum Depth'.",
+                    "Ensure 'Import into project' is UNCHECKED."
+                ]
+            },
+            {
+                id: 3,
+                title: "Resolve: Scene Cut",
+                icon: <Scissors size={24} />,
+                color: "text-[#FFD700]", // Gold
+                description: "The magic trick: chopping the single file back into clips.",
+                tasks: [
+                    "Open Resolve -> Media Page.",
+                    "Right-click your exported file in the browser.",
+                    "Select 'Scene Cut Detection'.",
+                    "Click 'Auto Scene Detect' (bottom left).",
+                    "Review cuts, then 'Add Cuts to Media Pool'.",
+                    "Go to Edit Page: The clips are now individual again!"
+                ]
+            },
+            {
+                id: 4,
+                title: "Grade & Finish",
+                icon: <Wand2 size={24} />,
+                color: "text-[#FFD700]", // Gold
+                description: "Color your project and render the final master.",
+                tasks: [
+                    "Color Grade your clips.",
+                    "Since effects/speed ramps are baked, you have zero glitches.",
+                    "Export Single Clip (ProRes 422 HQ or H.264 for Web).",
+                    "Bring back to Premiere ONLY if you need to add Titles again.",
+                    "Otherwise, deliver directly from Resolve."
+                ]
+            }
+        ];
+
+        const gradingSteps = [
+            {
+                id: 1,
+                title: "Project Setup",
+                icon: <Settings size={22} />,
+                color: "bg-[#800000]/20", // Maroon Tint
+                textColor: "text-[#FFD700]", // Gold
+                desc: "Before touching any nodes, set your Color Management.",
+                detail: "Go to Project Settings > Color Management. Set Color Science to 'DaVinci YRGB'. Set Timeline Color Space to 'Rec.709 Gamma 2.4' (standard for web/TV)."
+            },
+            {
+                id: 2,
+                title: "Node 1: Balance",
+                icon: <Sliders size={22} />,
+                color: "bg-[#800000]/20",
+                textColor: "text-[#FFD700]",
+                desc: "Fix the Exposure and White Balance.",
+                detail: "Use the 'Offset' wheel for exposure. Use 'Temp' and 'Tint' sliders to neutralize white balance. Do NOT add style yet."
+            },
+            {
+                id: 3,
+                title: "Node 2: Matching",
+                icon: <CheckCircle2 size={22} />,
+                color: "bg-[#800000]/20",
+                textColor: "text-[#FFD700]",
+                desc: "Make every shot look like it belongs in the same movie.",
+                detail: "Pick a 'Hero Shot'. Toggle between clips and adjust Lift/Gamma/Gain on this node until they match the Hero Shot's contrast and tone."
+            },
+            {
+                id: 4,
+                title: "Node 3: Secondaries",
+                icon: <Wand2 size={22} />,
+                color: "bg-[#800000]/20",
+                textColor: "text-[#FFD700]",
+                desc: "Fix specific problems (Skin tones, Sky, distracting objects).",
+                detail: "Use 'Qualifiers' (eyedropper) to select skin or sky. Use 'Power Windows' (masks) to brighten faces or darken backgrounds."
+            },
+            {
+                id: 5,
+                title: "Node 4: The Look",
+                icon: <Palette size={22} />,
+                color: "bg-[#800000]/20",
+                textColor: "text-[#FFD700]",
+                desc: "Apply your creative grade (Teal/Orange, Moody, Warm).",
+                detail: "This goes LAST in the chain. Use Custom Curves or apply a LUT here. Doing this last ensures your balance decisions don't fight the style."
+            }
+        ];
+
+        const comparisons = [
+            {
+                feature: "Stability",
+                xml: "Low. Speed ramps & plugins often break.",
+                bake: "High. What you see is what you get.",
+                winner: "bake"
+            },
+            {
+                feature: "Speed Ramps",
+                xml: "Nightmare to relink.",
+                bake: "Perfectly preserved (baked in).",
+                winner: "bake"
+            },
+            {
+                feature: "RAW Control",
+                xml: "Full Camera RAW access.",
+                bake: "Lost (Converted to ProRes/DNx).",
+                winner: "xml"
+            },
+            {
+                feature: "Setup Time",
+                xml: "Fast export, slow fix-up.",
+                bake: "Slow export, zero fix-up.",
+                winner: "bake"
+            }
+        ];
+
+        // --- Components ---
+
+        const ChecklistItem = ({ text }) => {
+            const [checked, setChecked] = useState(false);
+            
+            return (
+                <div 
+                    onClick={() => setChecked(!checked)}
+                    className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-colors border ${
+                        checked 
+                            ? "bg-[#800000]/20 border-[#800000]/50" 
+                            : "bg-slate-800/50 border-slate-700 hover:border-slate-600"
+                    }`}
+                >
+                    <div className={`mt-0.5 min-w-[20px] h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
+                        checked ? "bg-[#FFD700] border-[#FFD700]" : "border-slate-500"
+                    }`}>
+                        {checked && <Check size={12} className="text-[#800000]" />}
+                    </div>
+                    <span className={`text-sm ${checked ? "text-slate-400 line-through" : "text-slate-200"}`}>
+                        {text}
+                    </span>
+                </div>
+            );
+        };
+
+        const CodecCard = ({ title, recommended, specific, icon: Icon }) => (
+            <div className="bg-slate-800 p-5 rounded-xl border border-slate-700">
+                <div className="flex items-center gap-3 mb-3">
+                    <div className="p-2 bg-[#800000]/20 rounded-lg text-[#FFD700]">
+                        <Icon size={20} />
+                    </div>
+                    <h3 className="font-bold text-white">{title}</h3>
+                </div>
+                <div className="space-y-2">
+                    <div className="flex justify-between items-center text-sm">
+                        <span className="text-slate-400">Recommended:</span>
+                        <span className="text-[#FFD700] font-mono font-bold">{recommended}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm">
+                        <span className="text-slate-400">Bit Depth:</span>
+                        <span className="text-slate-200 font-mono">12-bit / 10-bit</span>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-2 border-t border-slate-700 pt-2">
+                        {specific}
+                    </p>
+                </div>
+            </div>
+        );
+
+        const NodeStep = ({ step }) => (
+            <div className="node-card flex-1 min-w-[250px] bg-slate-900 border border-slate-800 rounded-xl p-6 relative z-10 flex flex-col gap-4">
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${step.color} ${step.textColor} mb-2`}>
+                    {step.icon}
+                </div>
+                <div>
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1 block">Step {step.id}</span>
+                    <h3 className="text-lg font-bold text-white">{step.title}</h3>
+                </div>
+                <p className="text-slate-400 text-sm font-medium">{step.desc}</p>
+                <div className="mt-auto pt-4 border-t border-slate-800 text-xs text-slate-500 leading-relaxed">
+                    {step.detail}
+                </div>
+            </div>
+        );
+
+        const ComparisonRow = ({ item }) => (
+            <div className="grid grid-cols-3 gap-4 py-4 border-b border-slate-800 text-sm">
+                <div className="font-semibold text-slate-300 flex items-center">{item.feature}</div>
+                <div className={`flex items-center gap-2 ${item.winner === 'xml' ? 'text-[#FFD700]' : 'text-slate-600'}`}>
+                    {item.winner === 'xml' ? <CheckCircle2 size={16} /> : <XCircle size={16} />}
+                    {item.xml}
+                </div>
+                <div className={`flex items-center gap-2 ${item.winner === 'bake' ? 'text-[#FFD700]' : 'text-slate-600'}`}>
+                    {item.winner === 'bake' ? <CheckCircle2 size={16} /> : <AlertTriangle size={16} />}
+                    {item.bake}
+                </div>
+            </div>
+        );
+
+        const App = () => {
+            const [activeTab, setActiveTab] = useState('workflow');
+
+            return (
+                <div className="min-h-screen bg-slate-950 text-slate-200 selection:bg-[#800000]/30 selection:text-[#FFD700]">
+                    
+                    {/* Header */}
+                    <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
+                        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
+                            <div className="flex items-center gap-2 cursor-pointer" onClick={() => setActiveTab('workflow')}>
+                                {/* Logo Box: Maroon Gradient */}
+                                <div className="w-8 h-8 bg-gradient-to-br from-[#800000] to-[#500000] rounded-lg flex items-center justify-center shadow-lg shadow-black/30">
+                                    <Film size={18} className="text-[#FFD700]" />
+                                </div>
+                                <span className="font-bold text-lg tracking-tight text-white">Salpointe <span className="text-[#FFD700]">TV</span></span>
+                            </div>
+                            <nav className="hidden md:flex gap-6 text-sm font-medium">
+                                <button 
+                                    onClick={() => setActiveTab('workflow')}
+                                    className={`transition-colors ${activeTab === 'workflow' ? 'text-[#FFD700]' : 'text-slate-500 hover:text-[#FFD700]'}`}
+                                >
+                                    The Workflow
+                                </button>
+                                <button 
+                                    onClick={() => setActiveTab('grading')}
+                                    className={`transition-colors ${activeTab === 'grading' ? 'text-[#FFD700]' : 'text-slate-500 hover:text-[#FFD700]'}`}
+                                >
+                                    Grading 101
+                                </button>
+                                <button 
+                                    onClick={() => setActiveTab('why')}
+                                    className={`transition-colors ${activeTab === 'why' ? 'text-[#FFD700]' : 'text-slate-500 hover:text-[#FFD700]'}`}
+                                >
+                                    Why This Method?
+                                </button>
+                            </nav>
+                        </div>
+                    </header>
+
+                    <main className="max-w-5xl mx-auto px-6 py-12">
+                        
+                        {/* Hero Section */}
+                        <div className="text-center mb-16">
+                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#800000]/10 border border-[#800000]/20 text-[#FFD700] text-xs font-bold uppercase tracking-wider mb-6">
+                                {activeTab === 'grading' ? "Standard Node Tree" : "The \"Bake & Blade\" Strategy"}
+                            </div>
+                            <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 tracking-tight">
+                                {activeTab === 'grading' 
+                                    ? <span>Master the <span className="gradient-text">Nodes</span>.</span>
+                                    : <span>The Perfect <span className="gradient-text">Edit-to-Color</span> Workflow.</span>
+                                }
+                            </h1>
+                            <p className="text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
+                                {activeTab === 'grading'
+                                    ? "Don't just randomly turn knobs. Follow this standard order of operations to keep your color grade clean and professional."
+                                    : "Moving from Premiere to Resolve shouldn't break your edit. Learn the industry-standard \"Flat Render\" workflow for maximum stability."
+                                }
+                            </p>
+                        </div>
+
+                        {activeTab === 'workflow' && (
+                            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-16">
+                                {/* Step Cards */}
+                                <div className="grid md:grid-cols-2 gap-8 relative">
+                                    <div className="hidden md:block absolute top-1/2 left-0 w-full h-0.5 bg-slate-800 -z-10 transform -translate-y-1/2"></div>
+                                    {steps.map((step) => (
+                                        <div key={step.id} className="step-card bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden flex flex-col h-full">
+                                            <div className="p-6 border-b border-slate-800 bg-slate-800/30">
+                                                <div className="flex justify-between items-start mb-4">
+                                                    <div className={`p-3 rounded-xl bg-slate-950 border border-slate-800 ${step.color}`}>
+                                                        {step.icon}
+                                                    </div>
+                                                    <span className="text-4xl font-bold text-slate-800 select-none">0{step.id}</span>
+                                                </div>
+                                                <h3 className="text-xl font-bold text-white mb-1">{step.title}</h3>
+                                                <p className="text-slate-400 text-sm">{step.description}</p>
+                                            </div>
+                                            <div className="p-6 flex-1 bg-slate-900">
+                                                <div className="space-y-3">
+                                                    {step.tasks.map((task, i) => (
+                                                        <ChecklistItem key={i} text={task} />
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                                {/* Codec Guide */}
+                                <div className="bg-slate-900/50 rounded-2xl border border-slate-800 p-8">
+                                    <div className="flex items-center gap-3 mb-8">
+                                        <Info className="text-[#FFD700]" />
+                                        <h2 className="text-2xl font-bold text-white">Codec Cheat Sheet</h2>
+                                    </div>
+                                    <div className="grid md:grid-cols-2 gap-6">
+                                        <CodecCard 
+                                            title="MacOS Users" 
+                                            recommended="ProRes 4444"
+                                            specific="Supports alpha channels and high dynamic range. Standard for post-houses."
+                                            icon={Monitor}
+                                        />
+                                        <CodecCard 
+                                            title="Windows Users" 
+                                            recommended="DNxHR 4444"
+                                            specific="Avid's codec. Visually identical to ProRes. Install Avid Codecs LE if missing."
+                                            icon={Monitor}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'grading' && (
+                            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <div className="flex flex-col md:flex-row gap-6 overflow-x-auto pb-8">
+                                    {gradingSteps.map((step) => (
+                                        <NodeStep key={step.id} step={step} />
+                                    ))}
+                                </div>
+                                <div className="mt-8 bg-slate-900/50 rounded-2xl border border-slate-800 p-8 flex gap-6 items-start">
+                                    <div className="p-3 bg-[#800000]/20 text-[#FFD700] rounded-lg">
+                                        <Info size={24} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg font-bold text-white mb-2">Why this order?</h3>
+                                        <p className="text-slate-400 leading-relaxed">
+                                            If you apply a "Style" or "LUT" (Step 5) <em>before</em> you fix your Balance (Step 2), you'll be fighting the style the whole time. Always fix the image technically (Balance & Match) before you try to make it look "cool" (Look & Style).
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'why' && (
+                            <div className="animate-in fade-in zoom-in duration-300">
+                                <div className="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden">
+                                    <div className="p-8 border-b border-slate-800 bg-slate-800/30">
+                                        <h2 className="text-2xl font-bold text-white mb-2">XML vs. Baked Workflow</h2>
+                                        <p className="text-slate-400">Why professionals prefer the "Bake & Blade" method over sending XMLs.</p>
+                                    </div>
+                                    <div className="p-8">
+                                        <div className="grid grid-cols-3 gap-4 mb-4 text-xs uppercase tracking-wider font-bold text-slate-500">
+                                            <div>Feature</div>
+                                            <div>XML Workflow</div>
+                                            <div>Baked Workflow</div>
+                                        </div>
+                                        {comparisons.map((item, i) => (
+                                            <ComparisonRow key={i} item={item} />
+                                        ))}
+                                    </div>
+                                    <div className="p-8 bg-[#800000]/10 border-t border-slate-800">
+                                        <div className="flex gap-4">
+                                            <AlertTriangle className="text-[#FFD700] flex-shrink-0" />
+                                            <div>
+                                                <h4 className="font-bold text-[#FFD700] mb-1">When should you use XML?</h4>
+                                                <p className="text-sm text-slate-400">
+                                                    Only use the XML workflow if you absolutely need to access the RAW camera settings (ISO, White Balance) in Resolve. 
+                                                    For 95% of student films, a high-quality ProRes 4444 render provides more than enough data for aggressive grading.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                    </main>
+
+                    <footer className="border-t border-slate-800 py-12 text-center text-slate-500 text-sm">
+                        <p className="mb-2">Designed for Film & TV Production Students</p>
+                        <p>© 2025 Salpointe TV Educational Resources</p>
+                    </footer>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
