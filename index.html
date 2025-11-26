@@ -365,30 +365,32 @@
                     
                     {/* Header */}
                     <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
-                        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
-                            <div className="flex items-center gap-2 cursor-pointer" onClick={() => setActiveTab('workflow')}>
+                        <div className="max-w-5xl mx-auto px-6 py-3 md:h-16 flex flex-col md:flex-row items-center justify-between gap-4">
+                            <div className="flex items-center gap-2 cursor-pointer self-start md:self-auto" onClick={() => setActiveTab('workflow')}>
                                 {/* Logo Box: Maroon Gradient */}
                                 <div className="w-8 h-8 bg-gradient-to-br from-[#800000] to-[#500000] rounded-lg flex items-center justify-center shadow-lg shadow-black/30">
                                     <Film size={18} className="text-[#FFD700]" />
                                 </div>
                                 <span className="font-bold text-lg tracking-tight text-white">Salpointe <span className="text-[#FFD700]">TV</span></span>
                             </div>
-                            <nav className="hidden md:flex gap-6 text-sm font-medium">
+                            
+                            {/* Navigation - Now scrollable on mobile */}
+                            <nav className="flex gap-1 md:gap-6 text-sm font-medium w-full md:w-auto overflow-x-auto pb-2 md:pb-0 no-scrollbar">
                                 <button 
                                     onClick={() => setActiveTab('workflow')}
-                                    className={`transition-colors ${activeTab === 'workflow' ? 'text-[#FFD700]' : 'text-slate-500 hover:text-[#FFD700]'}`}
+                                    className={`whitespace-nowrap px-3 py-1.5 rounded-full transition-all ${activeTab === 'workflow' ? 'bg-[#800000]/20 text-[#FFD700]' : 'text-slate-500 hover:text-[#FFD700]'}`}
                                 >
                                     The Workflow
                                 </button>
                                 <button 
                                     onClick={() => setActiveTab('grading')}
-                                    className={`transition-colors ${activeTab === 'grading' ? 'text-[#FFD700]' : 'text-slate-500 hover:text-[#FFD700]'}`}
+                                    className={`whitespace-nowrap px-3 py-1.5 rounded-full transition-all ${activeTab === 'grading' ? 'bg-[#800000]/20 text-[#FFD700]' : 'text-slate-500 hover:text-[#FFD700]'}`}
                                 >
                                     Grading 101
                                 </button>
                                 <button 
                                     onClick={() => setActiveTab('why')}
-                                    className={`transition-colors ${activeTab === 'why' ? 'text-[#FFD700]' : 'text-slate-500 hover:text-[#FFD700]'}`}
+                                    className={`whitespace-nowrap px-3 py-1.5 rounded-full transition-all ${activeTab === 'why' ? 'bg-[#800000]/20 text-[#FFD700]' : 'text-slate-500 hover:text-[#FFD700]'}`}
                                 >
                                     Why This Method?
                                 </button>
